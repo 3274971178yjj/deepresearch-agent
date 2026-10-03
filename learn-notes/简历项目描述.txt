@@ -1,0 +1,8 @@
+项目经历   DeepResearch Agent:面向复杂深度研究任务的多智能体协作系统 2026年6月-2026年9月
+· 项目介绍:面向深度研究任务中信息过载、幻觉漂移与缺乏端到端评测的问题,基于asyncio自研编排引擎搭建规划→执行→记忆→对抗→评测全链路多Agent系统,构建集DAG并发调度、Red-Blue对抗降噪、三级语义压缩与跨Agent共享记忆于一体的深度研究报告生成系统。
+· 基于asyncio+Semaphore自研多智能体编排引擎,实现DAG拓扑并发执行与9状态状态机任务生命周期管理,支持动态replan与三级降级策略(单任务超时→批量失败重规划→全局超时强制合成)。
+· Red-Blue对抗降噪:Red Agent从事实性/逻辑一致性/引用质量多维度攻击报告,Blue Agent执行ADD/DELETE/MODIFY/VERIFY修复;内置评分收敛与震荡检测,三层JSON解析fallback将成功率从85%→95%。
+· 上下文压缩与共享记忆:L1 Embedding粗过滤→L2 TextRank细筛选→L3原文保留三级语义压缩,显著降低长链路信息损失;构建跨Agent共享记忆存储(SQLite+numpy向量索引),写前自动去重与矛盾检测(启发式反义词+语义对立)并多策略消解。
+· 完整评测体系:自建ResearchBench(11领域/35题)+HotpotQA深度研究变体;规则指标(事实准确率/幻觉率/引用覆盖率)+LLM-as-Judge五维评分+Bootstrap 95% CI+Cohen's d三层评测流水线;支持4类LLM后端(DeepSeek/MiMo/vLLM/OpenAI)热切换与6项一键实验脚本。
+
+
