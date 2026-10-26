@@ -242,6 +242,8 @@ class SharedMemoryStore:
                 # 用新 entry 更新，但保留旧 ID
                 entry.entry_id = duplicate_id
                 entry.timestamp = max(entry.timestamp, existing.timestamp)
+                # 与非合并路径一致：落库前绑定当前 session，否则合并记录会脱离会话
+                entry.session_id = self.session_id
                 self.lt.insert_entry(entry)
                 self._remove_from_index(duplicate_id)
                 self._add_to_index(entry)

@@ -12,12 +12,12 @@ Judge 对研究报告进行五维度连续评分，支持 Ensemble（3个不同 
 """
 from __future__ import annotations
 
-import json
 import math
 from dataclasses import dataclass
 from typing import Any
 
 from src.orchestrator.schemas import ResearchReport
+from src.utils.json_utils import JsonExtractionError, extract_json_dict
 
 
 __all__ = ["Judge"]
@@ -365,30 +365,20 @@ class Judge:
         return "\n".join(lines)
 
     def _parse_judge_output(self, raw: str) -> tuple[dict[str, float], str]:
-        """解析 Judge 的 JSON 输出。"""
-        raw = raw.strip()
-        if not raw:
+        """解析 Judge 的 JSON 输出（解析逻辑由 json_utils 统一提供）。"""
+        if not raw or not raw.strip():
             return {}, ""
 
-        import re
+        try:
+            data = extract_json_dict(raw)
+        except JsonExtractionError:
+            return {}, "parse_failed"
 
-        # 尝试提取 JSON 块
-        candidates = [raw]
-        code_match = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
-        candidates.extend(code_match.findall(raw))
-        brace = re.search(r"\{.*\}", raw, re.DOTALL)
-        if brace:
-            candidates.append(brace.group(0))
-
-        for cand in candidates:
-            try:
-                data = json.loads(cand.strip())
-                scores = {}
-                for dim in ["factual_accuracy", "coverage", "logical_coherence", "citation_quality"]:
-                    scores[dim] = float(data.get(dim, 5.0))
-                rationale = data.get("rationale", "")
-                return scores, rationale
-            except (json.JSONDecodeError, ValueError):
-                continue
-
-        return {}, "parse_failed"
+        try:
+            scores = {}
+            for dim in ["factual_accuracy", "coverage", "logical_coherence", "citation_quality"]:
+                scores[dim] = float(data.get(dim, 5.0))
+            rationale = data.get("rationale", "")
+            return scores, rationale
+        except (TypeError, ValueError):
+            return {}, "parse_failed"

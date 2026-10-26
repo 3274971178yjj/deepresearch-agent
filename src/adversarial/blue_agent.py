@@ -22,6 +22,7 @@ from src.adversarial.verdict import (
     VerdictEngine,
 )
 from src.orchestrator.schemas import ResearchReport
+from src.utils.json_utils import extract_json_dict
 from src.utils.tracing import trace_agent
 
 
@@ -402,9 +403,7 @@ class BlueAgent:
         raw = resp.content or ""
 
         try:
-            import json
-
-            data = json.loads(raw.strip())
+            data = extract_json_dict(raw, default={})
             has_new = bool(data.get("has_new_issue", False))
             new_issues = []
             for item in data.get("new_issues", []):
@@ -444,58 +443,22 @@ class BlueAgent:
 
     def _parse_fix_json(self, raw: str) -> tuple[str, list[dict]]:
         """解析 in_place / search 修复的 JSON 输出。"""
-        import json
-        import re
-
-        raw = raw.strip()
-        if not raw:
-            return "", []
-        try:
-            data = json.loads(raw)
-            return data.get("fixed_content", ""), data.get("changes", [])
-        except json.JSONDecodeError:
-            pass
-        code = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
-        for m in code.findall(raw):
-            try:
-                data = json.loads(m.strip())
-                return data.get("fixed_content", ""), data.get("changes", [])
-            except json.JSONDecodeError:
-                continue
-        brace = re.search(r"\{.*\}", raw, re.DOTALL)
-        if brace:
-            try:
-                data = json.loads(brace.group(0))
-                return data.get("fixed_content", ""), data.get("changes", [])
-            except json.JSONDecodeError:
-                pass
-        return "", []
+        return self._parse_repair_json(raw, "changes")
 
     def _parse_removal_json(self, raw: str) -> tuple[str, list[dict]]:
         """解析 removal 修复的 JSON 输出。"""
-        import json
-        import re
+        return self._parse_repair_json(raw, "removed_segments")
 
-        raw = raw.strip()
-        if not raw:
-            return "", []
-        try:
-            data = json.loads(raw)
-            return data.get("fixed_content", ""), data.get("removed_segments", [])
-        except json.JSONDecodeError:
-            pass
-        code = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
-        for m in code.findall(raw):
-            try:
-                data = json.loads(m.strip())
-                return data.get("fixed_content", ""), data.get("removed_segments", [])
-            except json.JSONDecodeError:
-                continue
-        brace = re.search(r"\{.*\}", raw, re.DOTALL)
-        if brace:
-            try:
-                data = json.loads(brace.group(0))
-                return data.get("fixed_content", ""), data.get("removed_segments", [])
-            except json.JSONDecodeError:
-                pass
-        return "", []
+    @staticmethod
+    def _parse_repair_json(raw: str, list_key: str) -> tuple[str, list[dict]]:
+        """解析修复类 JSON 输出（解析逻辑由 json_utils 统一提供）。
+
+        Args:
+            raw: 模型原始输出。
+            list_key: 变更列表字段名（"changes" 或 "removed_segments"）。
+        """
+        data = extract_json_dict(raw, default={})
+        items = data.get(list_key, [])
+        if not isinstance(items, list):
+            items = []
+        return data.get("fixed_content", ""), items

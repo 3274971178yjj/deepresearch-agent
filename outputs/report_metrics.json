@@ -1,0 +1,84 @@
+{
+  "rows": [
+    {
+      "file": "outputs/reports1/report_20260509_130149_2024年至2025年大模型Agent技.md",
+      "chars": 25185,
+      "paragraphs": 321,
+      "sentences": 413,
+      "citation_coverage_原文指标": 0.2617,
+      "citation_coverage_识别Result格式": 0.3084,
+      "hallucination_rate": 0.0145,
+      "logical_consistency": 1.0,
+      "citation_markers": {
+        "（Result N）": 15,
+        "[N]": 0,
+        "http(s)://": 85,
+        "arxiv.org": 9
+      }
+    },
+    {
+      "file": "outputs/reports2/report_20260509_140616_计算Transformer模型在7B_1.md",
+      "chars": 23005,
+      "paragraphs": 304,
+      "sentences": 388,
+      "citation_coverage_原文指标": 0.2434,
+      "citation_coverage_识别Result格式": 0.273,
+      "hallucination_rate": 0.0258,
+      "logical_consistency": 1.0,
+      "citation_markers": {
+        "（Result N）": 15,
+        "[N]": 5,
+        "http(s)://": 70,
+        "arxiv.org": 13
+      }
+    },
+    {
+      "file": "outputs/reports3/report_20260509_150749_中国新能源汽车行业2024年至2025年.md",
+      "chars": 24092,
+      "paragraphs": 269,
+      "sentences": 410,
+      "citation_coverage_原文指标": 0.3197,
+      "citation_coverage_识别Result格式": 0.3197,
+      "hallucination_rate": 0.1171,
+      "logical_consistency": 1.0,
+      "citation_markers": {
+        "（Result N）": 0,
+        "[N]": 0,
+        "http(s)://": 86,
+        "arxiv.org": 0
+      }
+    },
+    {
+      "file": "outputs/reports4/report_20260509_163841_检索近一年_2024年至2025年_关于.md",
+      "chars": 13509,
+      "paragraphs": 57,
+      "sentences": 60,
+      "citation_coverage_原文指标": 0.7193,
+      "citation_coverage_识别Result格式": 0.7193,
+      "hallucination_rate": 0.0,
+      "logical_consistency": 1.0,
+      "citation_markers": {
+        "（Result N）": 0,
+        "[N]": 0,
+        "http(s)://": 42,
+        "arxiv.org": 16
+      }
+    },
+    {
+      "file": "outputs/reports5/report_20260509_171856_对比分析2024年至2025年生成式AI.md",
+      "chars": 19180,
+      "paragraphs": 199,
+      "sentences": 310,
+      "citation_coverage_原文指标": 0.3869,
+      "citation_coverage_识别Result格式": 0.3869,
+      "hallucination_rate": 0.0097,
+      "logical_consistency": 1.0,
+      "citation_markers": {
+        "（Result N）": 0,
+        "[N]": 0,
+        "http(s)://": 77,
+        "arxiv.org": 1
+      }
+    }
+  ]
+}

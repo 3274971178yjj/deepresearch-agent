@@ -110,7 +110,8 @@ class FileReaderTool:
             return f"[FileReader Error] Invalid path: {e}"
 
         # 安全检查 1：目录限制
-        if self.allowed_base_dir and not str(path).startswith(str(self.allowed_base_dir)):
+        # 用 is_relative_to 而非字符串前缀匹配，避免 /allowed_evil 绕过 /allowed
+        if self.allowed_base_dir and not path.is_relative_to(self.allowed_base_dir):
             return (
                 f"[FileReader Error] Access denied: {path} is outside the allowed directory "
                 f"{self.allowed_base_dir}."

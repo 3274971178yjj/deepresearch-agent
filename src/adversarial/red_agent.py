@@ -11,8 +11,6 @@ Red Agent 的职责是对研究报告进行多维度"攻击"，找出事实错�
 """
 from __future__ import annotations
 
-import json
-import re
 from typing import Any
 
 from src.adversarial.verdict import (
@@ -24,6 +22,7 @@ from src.adversarial.verdict import (
     VerdictEngine,
 )
 from src.orchestrator.schemas import ResearchReport
+from src.utils.json_utils import JsonExtractionError, extract_json_dict
 from src.utils.tracing import trace_agent
 
 
@@ -356,11 +355,9 @@ class RedAgent:
     def _parse_json_output(self, raw: str, dimension: Dimension) -> tuple[float, list[Issue]]:
         """解析模型 JSON 输出，提取分数和 issues。
 
-        兼容策略：
-        1. 先尝试从整个输出中提取第一个 JSON 对象。
-        2. 如果失败，尝试用正则提取 ```json ... ``` 块。
-        3. 如果仍失败，尝试修复常见 JSON 格式错误（如尾随逗号、单引号）。
-        4. 如果仍失败，返回保守分数 5.0 和空 issues。
+        解析逻辑统一由 src/utils/json_utils.py 提供（代码块提取、
+        括号平衡扫描、尾随逗号/注释/单引号修复）。
+        全部失败时返回保守分数 5.0 和空 issues。
 
         Args:
             raw: 模型原始输出文本。
@@ -369,72 +366,14 @@ class RedAgent:
         Returns:
             (score, issues_list)
         """
-        raw = raw.strip()
-        if not raw:
+        if not raw or not raw.strip():
             return 5.0, []
 
-        # 尝试 1: 直接解析整个文本
         try:
-            data = json.loads(raw)
-            return self._extract_from_dict(data, dimension)
-        except json.JSONDecodeError:
-            pass
-
-        # 尝试 2: 提取 ```json 代码块
-        code_block_pattern = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
-        matches = code_block_pattern.findall(raw)
-        for m in matches:
-            try:
-                data = json.loads(m.strip())
-                return self._extract_from_dict(data, dimension)
-            except json.JSONDecodeError:
-                continue
-
-        # 尝试 3: 提取第一个 { ... } 块（可能嵌套）
-        brace_match = re.search(r"\{.*\}", raw, re.DOTALL)
-        if brace_match:
-            try:
-                data = json.loads(brace_match.group(0))
-                return self._extract_from_dict(data, dimension)
-            except json.JSONDecodeError:
-                pass
-
-        # 尝试 4: 修复常见 JSON 格式错误后重试
-        fixed = self._fix_common_json_errors(raw)
-        if fixed:
-            for candidate in [fixed, fixed[fixed.find("{"):fixed.rfind("}")+1]]:
-                try:
-                    data = json.loads(candidate)
-                    return self._extract_from_dict(data, dimension)
-                except json.JSONDecodeError:
-                    continue
-
-        # 全部失败：保守返回
-        return 5.0, []
-
-    def _fix_common_json_errors(self, raw: str) -> str | None:
-        """修复常见的 JSON 格式错误。"""
-        # 提取最外层的大括号内容
-        start = raw.find("{")
-        end = raw.rfind("}")
-        if start == -1 or end == -1 or end <= start:
-            return None
-        text = raw[start:end+1]
-        
-        # 修复 1: 移除注释
-        text = re.sub(r"//.*?\n", "\n", text)
-        text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
-        
-        # 修复 2: 单引号 → 双引号
-        text = text.replace("'", '"')
-        
-        # 修复 3: 移除尾随逗号（对象/数组最后一个元素后的逗号）
-        text = re.sub(r",(\s*[}\]])", r"\1", text)
-        
-        # 修复 4: 修复未转义的换行符 inside 字符串（简单 heuristic）
-        # 如果行内有 "..." 且中间有换行，可能导致解析失败
-        
-        return text
+            data = extract_json_dict(raw)
+        except JsonExtractionError:
+            return 5.0, []
+        return self._extract_from_dict(data, dimension)
 
     def _extract_from_dict(self, data: dict, dimension: Dimension) -> tuple[float, list[Issue]]:
         """从解析后的 dict 中提取 score 和 issues。"""

@@ -12,9 +12,10 @@ Proposer 生成三级难度（L1/L2/L3）的研究问题，支持自适应难度
 """
 from __future__ import annotations
 
-import json
 import random
 from typing import Any
+
+from src.utils.json_utils import extract_json_dict
 
 
 __all__ = ["Proposer"]
@@ -268,25 +269,5 @@ class Proposer:
         return random.choice(templates.get(difficulty, templates["L2"]))
 
     def _parse_json(self, raw: str) -> dict[str, Any]:
-        raw = raw.strip()
-        if not raw:
-            return {}
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError:
-            pass
-        import re
-
-        code = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
-        for m in code.findall(raw):
-            try:
-                return json.loads(m.strip())
-            except json.JSONDecodeError:
-                continue
-        brace = re.search(r"\{.*\}", raw, re.DOTALL)
-        if brace:
-            try:
-                return json.loads(brace.group(0))
-            except json.JSONDecodeError:
-                pass
-        return {}
+        """鲁棒 JSON 解析（解析逻辑由 json_utils 统一提供）。"""
+        return extract_json_dict(raw, default={})

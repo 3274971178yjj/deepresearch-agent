@@ -17,6 +17,8 @@ import json
 import os
 from typing import Any
 
+from src.utils.json_utils import extract_json_dict
+
 
 __all__ = ["SymbolicLearner"]
 
@@ -270,29 +272,8 @@ class SymbolicLearner:
         return copy.deepcopy(self._prompt_versions[-1])
 
     def _parse_json(self, raw: str) -> dict[str, Any]:
-        """鲁棒 JSON 解析。"""
-        raw = raw.strip()
-        if not raw:
-            return {}
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError:
-            pass
-        import re
-
-        code = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
-        for m in code.findall(raw):
-            try:
-                return json.loads(m.strip())
-            except json.JSONDecodeError:
-                continue
-        brace = re.search(r"\{.*\}", raw, re.DOTALL)
-        if brace:
-            try:
-                return json.loads(brace.group(0))
-            except json.JSONDecodeError:
-                pass
-        return {}
+        """鲁棒 JSON 解析（解析逻辑由 json_utils 统一提供）。"""
+        return extract_json_dict(raw, default={})
 
     def save_versions_to_disk(self, dir_path: str) -> None:
         """将版本历史持久化到磁盘。"""

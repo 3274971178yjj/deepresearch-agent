@@ -1,0 +1,495 @@
+{
+  "1_综合分权重键": {
+    "权重表": {
+      "factual_accuracy": 0.25,
+      "logical_consistency": 0.2,
+      "citation_coverage": 0.2,
+      "bias": 0.2,
+      "comprehensiveness": 0.15
+    },
+    "口径A_run_ablation_用键": [
+      "bias",
+      "citation_coverage",
+      "comprehensiveness",
+      "factual_accuracy",
+      "logical_consistency"
+    ],
+    "口径A_全满分时composite": 1.0,
+    "口径B_research_bench_用键": [
+      "bias",
+      "citation_coverage",
+      "comprehensiveness",
+      "factual_accuracy_sem",
+      "factual_accuracy_str",
+      "logical_consistency"
+    ],
+    "口径B_全满分时composite": 0.75,
+    "口径C_rule_based原生产出用键": [
+      "citation_coverage",
+      "comprehensiveness",
+      "factual_accuracy",
+      "logical_consistency"
+    ],
+    "口径C_全满分时composite": 0.8,
+    "结论": "同一个 composite_score，三个调用方三个天花板：A=1.00（键全对）、B=0.75（research_bench 口径，factual_accuracy 权重 0.25 静默清零）、C=0.80（rule_based 自己产不出 bias 键，0.20 权重静默清零）"
+  },
+  "2_逻辑一致性误报": {
+    "对照句": [
+      {
+        "句子": "这不是一个好方案。",
+        "logical_consistency": 0.0
+      },
+      {
+        "句子": "公司不可以这样做。",
+        "logical_consistency": 0.0
+      },
+      {
+        "句子": "这个问题并不会消失。",
+        "logical_consistency": 0.0
+      },
+      {
+        "句子": "该方案支持增量更新，反对全量重跑。",
+        "logical_consistency": 0.0
+      },
+      {
+        "句子": "报告共 3200 字符，引用 15 处。",
+        "logical_consistency": 1.0
+      }
+    ],
+    "机理": "rule_based.py 的 contradiction_pairs 含 (\"是\",\"不是\")、(\"可以\",\"不可以\")、(\"会\",\"不会\")；判定是 `if a in sentence and b in sentence`，子串包含 → 含否定形式的句子必然同时命中 a 与 b"
+  },
+  "2b_幻觉率探针": {
+    "探针": [
+      {
+        "情形": "裸数字_无括号",
+        "hallucination_rate": 1.0,
+        "句子": "2025 年市场规模达到 100 亿美元。"
+      },
+      {
+        "情形": "括号内是补充说明_非引用",
+        "hallucination_rate": 0.0,
+        "句子": "2025 年市场规模达到 100 亿美元（约合人民币 700 亿）。"
+      },
+      {
+        "情形": "方括号真引用_N格式",
+        "hallucination_rate": 0.0,
+        "句子": "2025 年市场规模达到 100 亿美元[1]。"
+      },
+      {
+        "情形": "圆括号真引用",
+        "hallucination_rate": 0.0,
+        "句子": "2025 年市场规模达到 100 亿美元(来源: IDC)。"
+      },
+      {
+        "情形": "全角方头括号真引用_项目推荐格式",
+        "hallucination_rate": 1.0,
+        "句子": "2025 年市场规模达到 100 亿美元【来源: IDC】。"
+      }
+    ],
+    "豁免正则": "[\\[【（(].*?[\\]）)]",
+    "豁免正则_开括号类": "[\\[【（(]",
+    "豁免正则_闭括号类": "[\\]）)]",
+    "缺陷": "开括号类含【，闭括号类缺】→【来源: ...】无法构成豁免匹配",
+    "真实报告构成": {
+      "逐份": [
+        {
+          "报告": "reports1",
+          "句数": 413,
+          "可疑句": 6,
+          "可疑占比": 0.0145,
+          "各模式": {
+            "带单位数字": 6,
+            "绝对化表述": 0,
+            "模糊引用开头": 0
+          }
+        },
+        {
+          "报告": "reports2",
+          "句数": 388,
+          "可疑句": 10,
+          "可疑占比": 0.0258,
+          "各模式": {
+            "带单位数字": 10,
+            "绝对化表述": 0,
+            "模糊引用开头": 0
+          }
+        },
+        {
+          "报告": "reports3",
+          "句数": 410,
+          "可疑句": 48,
+          "可疑占比": 0.1171,
+          "各模式": {
+            "带单位数字": 45,
+            "绝对化表述": 3,
+            "模糊引用开头": 0
+          }
+        },
+        {
+          "报告": "reports4",
+          "句数": 60,
+          "可疑句": 0,
+          "可疑占比": 0.0,
+          "各模式": {
+            "带单位数字": 0,
+            "绝对化表述": 0,
+            "模糊引用开头": 0
+          }
+        },
+        {
+          "报告": "reports5",
+          "句数": 310,
+          "可疑句": 3,
+          "可疑占比": 0.0097,
+          "各模式": {
+            "带单位数字": 3,
+            "绝对化表述": 0,
+            "模糊引用开头": 0
+          }
+        }
+      ],
+      "句数合计": 1581,
+      "可疑句合计": 67,
+      "池化口径": 0.0424,
+      "逐份比率的算术平均": 0.0334,
+      "各模式贡献": {
+        "带单位数字": 64,
+        "绝对化表述": 3,
+        "模糊引用开头": 0
+      },
+      "模式集中度": 0.9552
+    },
+    "口径分歧": "『逐份比率的算术平均』与『池化(总可疑/总句数)』不是同一个数：简历上的 3.34% 是前者，池化口径是 4.24%。被追问要能立刻说出用的哪个"
+  },
+  "3_题库脏数据": {
+    "脏数据": [
+      {
+        "题目": "fin_005",
+        "字段": "ground_truth",
+        "值": "' Lemonade'"
+      },
+      {
+        "题目": "fin_005",
+        "字段": "ground_truth",
+        "值": "' telematics'"
+      }
+    ],
+    "脏数据条数": 2,
+    "fin_005_ground_truth键": [
+      " Lemonade",
+      " telematics"
+    ],
+    "影响": "fact_accuracy 用 `key_fact.lower() in report_lower` 逐键子串匹配，键名带前导空格 → 永远匹配不到 → 该题 factual_accuracy 恒为 0"
+  },
+  "4_domain过滤": {
+    "题库真实domain取值": {
+      "科技": 8,
+      "医疗": 6,
+      "金融": 6,
+      "教育": 2,
+      "法律": 2,
+      "能源": 2,
+      "消费": 2,
+      "汽车": 2,
+      "游戏": 2,
+      "传媒": 1,
+      "交叉": 2
+    },
+    "域数量": 11,
+    "CLI_choices": [
+      "tech",
+      "med",
+      "fin"
+    ],
+    "CLI_choices命中题数": {
+      "tech": 0,
+      "med": 0,
+      "fin": 0
+    },
+    "结论": "run_baseline.py:211 / run_ablation.py:293 的 --domain choices 是英文，数据里的 domain 是中文 → 传任何合法值都选 0 道题 → 下游全部 0.0"
+  },
+  "5_消融开关接线": {
+    "逐臂审计": {
+      "no_adversarial": {
+        "override键": "adversarial.enabled",
+        "src内该配置段读取点": [
+          "src/core/runner.py:225",
+          "src/core/runner.py:312"
+        ],
+        "段内其它被读键": [],
+        "接线状态": "effective",
+        "读点": [
+          "src/core/runner.py:312"
+        ],
+        "消费点": [
+          "src/orchestrator/orchestrator.py:429"
+        ],
+        "说明": "读进 RunConfig.enable_adversarial，orchestrator 据此决定是否进 ADVERSARIAL 状态"
+      },
+      "no_compressor": {
+        "override键": "compressor.enable_multilevel",
+        "src内该配置段读取点": [
+          "src/core/runner.py:193"
+        ],
+        "段内其它被读键": [],
+        "接线状态": "unwired",
+        "读点": [],
+        "消费点": [],
+        "说明": "initialize_modules 只读 compressor.max_context_length / output_reserve_tokens；enable_multilevel 全仓出现 3 次且都在配置与消融脚本自身，src/ 无消费点 → ContextCompressor 照常构造"
+      },
+      "no_memory": {
+        "override键": "memory.enabled",
+        "src内该配置段读取点": [
+          "src/core/runner.py:205"
+        ],
+        "段内其它被读键": [],
+        "接线状态": "unwired",
+        "读点": [],
+        "消费点": [],
+        "说明": "initialize_modules 只读 memory.db_path / session_id，SharedMemoryStore 无条件构造并注入 Orchestrator → memory.enabled 无消费点"
+      },
+      "no_evolution": {
+        "override键": "evolution.enabled",
+        "src内该配置段读取点": [
+          "src/core/runner.py:264",
+          "src/core/runner.py:313"
+        ],
+        "段内其它被读键": [],
+        "接线状态": "stub",
+        "读点": [
+          "src/core/runner.py:264",
+          "src/core/runner.py:313"
+        ],
+        "消费点": [],
+        "说明": "两处读到的分支体都只有 logger.info（『预留接口』）；RunConfig.enable_evolution 在 orchestrator 里无任何消费点 → M6 是空壳，开关拨动不改变流水线行为"
+      }
+    },
+    "生效臂": [
+      "no_adversarial"
+    ],
+    "空壳臂": [
+      "no_evolution"
+    ],
+    "未接线臂": [
+      "no_compressor",
+      "no_memory"
+    ],
+    "总臂数": 4,
+    "结论": "4 个模块消融臂：1 个真正生效 ['no_adversarial']，1 个是空壳 ['no_evolution']，2 个未接线 ['no_compressor', 'no_memory']；空壳臂与未接线臂的产出与 full 相同（同 seed 下逐字节），跑出来的『差异』只会是 LLM 采样噪声"
+  },
+  "6_实现清点": {
+    "实现清点": {
+      "BaselineEvaluator": {
+        "定义处": [
+          "evaluation/run_baseline.py"
+        ],
+        "外部引用文件": [],
+        "仅同文件引用": [
+          "evaluation/run_baseline.py"
+        ],
+        "判定": "仅自身入口引用"
+      },
+      "HotpotQABenchmark": {
+        "定义处": [
+          "evaluation/benchmarks/hotpotqa.py"
+        ],
+        "外部引用文件": [
+          "scripts/run_eval.py"
+        ],
+        "仅同文件引用": [
+          "evaluation/benchmarks/hotpotqa.py"
+        ],
+        "判定": "接在链路上"
+      },
+      "Judge": {
+        "定义处": [
+          "src/evolution/judge.py"
+        ],
+        "外部引用文件": [
+          "evaluation/metrics.py",
+          "evaluation/run_baseline.py",
+          "evaluation/metrics/composite.py",
+          "evaluation/metrics/judge_based.py",
+          "evaluation/metrics/rule_based.py",
+          "scripts/build_kb_pdf.py",
+          "scripts/measure_eval_layer.py",
+          "scripts/run_all_experiments.py",
+          "scripts/run_benchmark.py",
+          "scripts/run_evolution.py",
+          "scripts/run_judge.py",
+          "src/core/judge.py",
+          "src/evolution/engine.py"
+        ],
+        "仅同文件引用": [
+          "src/evolution/judge.py"
+        ],
+        "判定": "接在链路上"
+      },
+      "JudgeBasedMetrics": {
+        "定义处": [
+          "evaluation/metrics/judge_based.py"
+        ],
+        "外部引用文件": [
+          "evaluation/metrics/__init__.py"
+        ],
+        "仅同文件引用": [],
+        "判定": "接在链路上"
+      },
+      "LLMJudge": {
+        "定义处": [
+          "src/core/judge.py"
+        ],
+        "外部引用文件": [
+          "evaluation/metrics/composite.py",
+          "evaluation/metrics/judge_based.py",
+          "scripts/run_benchmark.py",
+          "scripts/run_judge.py",
+          "src/core/__init__.py"
+        ],
+        "仅同文件引用": [
+          "src/core/judge.py"
+        ],
+        "判定": "接在链路上"
+      },
+      "ResearchMetrics": {
+        "定义处": [
+          "evaluation/metrics.py"
+        ],
+        "外部引用文件": [],
+        "仅同文件引用": [
+          "evaluation/metrics.py"
+        ],
+        "判定": "仅自身入口引用"
+      },
+      "RuleBasedMetrics": {
+        "定义处": [
+          "evaluation/metrics/rule_based.py"
+        ],
+        "外部引用文件": [
+          "evaluation/benchmarks/research_bench.py",
+          "evaluation/metrics/__init__.py",
+          "scripts/measure_eval_layer.py",
+          "scripts/measure_report_metrics.py",
+          "scripts/run_ablation.py"
+        ],
+        "仅同文件引用": [],
+        "判定": "接在链路上"
+      }
+    },
+    "仅自身入口引用的实现": [
+      "BaselineEvaluator",
+      "ResearchMetrics"
+    ],
+    "结论": "判据是『定义文件之外是否有人引用』。仅自身入口引用 ≠ 一定是废代码（可能是 CLI 入口），但 = 没有接进主调用链，被问到时要说清。"
+  },
+  "7_数据集规模": {
+    "ResearchBench_题目数": 35,
+    "ResearchBench_docstring声明": [
+      "20"
+    ],
+    "ResearchBench_每题结构": [
+      "domain",
+      "expected_topics",
+      "ground_truth",
+      "id",
+      "query"
+    ],
+    "HotpotQA_内置兜底题数": 5,
+    "HotpotQA_真实加载需联网": true,
+    "HotpotQA_兜底触发条件": "datasets 未安装 / 加载超时 / 离线"
+  },
+  "8_假数据生成器": {
+    "硬编码演示数值": [
+      {
+        "line": 250,
+        "键": "adv_0",
+        "值": 0.62
+      },
+      {
+        "line": 250,
+        "键": "adv_1",
+        "值": 0.71
+      },
+      {
+        "line": 250,
+        "键": "adv_2",
+        "值": 0.78
+      },
+      {
+        "line": 250,
+        "键": "adv_3",
+        "值": 0.8
+      },
+      {
+        "line": 253,
+        "键": "evo_off",
+        "值": 0.68
+      },
+      {
+        "line": 253,
+        "键": "evo_on",
+        "值": 0.76
+      }
+    ],
+    "硬编码数值个数": 6,
+    "出现演示数据字样": true,
+    "代码行区间": [
+      245,
+      254
+    ],
+    "危害": "evaluation/analyze_ablation.py 的 main() 在未指定输入文件时，会用这些硬编码数值渲染 dpi=300 的对比图（adv_0→adv_3 上升、evo_off→evo_on 上升）。图看起来像真实实验结果，但一个数都没测过。"
+  },
+  "9_真实报告上的键名落差": {
+    "对照题": "tech_001",
+    "口径A_天花板": 1.0,
+    "口径B_天花板": 0.75,
+    "逐份": [
+      {
+        "报告": "reports1",
+        "factual_accuracy_str": 0.0,
+        "factual_accuracy_sem": 0.0,
+        "口径A_composite": 0.4869,
+        "口径B_composite": 0.4869,
+        "蒸发": 0.0,
+        "理论蒸发": 0.0
+      },
+      {
+        "报告": "reports2",
+        "factual_accuracy_str": 0.75,
+        "factual_accuracy_sem": 0.0,
+        "口径A_composite": 0.7248,
+        "口径B_composite": 0.5373,
+        "蒸发": 0.1875,
+        "理论蒸发": 0.1875
+      },
+      {
+        "报告": "reports3",
+        "factual_accuracy_str": 0.0,
+        "factual_accuracy_sem": 0.0,
+        "口径A_composite": 0.4593,
+        "口径B_composite": 0.4593,
+        "蒸发": 0.0,
+        "理论蒸发": 0.0
+      },
+      {
+        "报告": "reports4",
+        "factual_accuracy_str": 0.0,
+        "factual_accuracy_sem": 0.0,
+        "口径A_composite": 0.5439,
+        "口径B_composite": 0.5439,
+        "蒸发": 0.0,
+        "理论蒸发": 0.0
+      },
+      {
+        "报告": "reports5",
+        "factual_accuracy_str": 0.0,
+        "factual_accuracy_sem": 0.0,
+        "口径A_composite": 0.4755,
+        "口径B_composite": 0.4755,
+        "蒸发": 0.0,
+        "理论蒸发": 0.0
+      }
+    ],
+    "口径分歧": "口径B 下报告分数被硬性压到 0.75 以下；且 factual_accuracy_sem（语义事实准确率，被注释标为『面试强化版』）根本不在权重表里，算了也不进 composite"
+  }
+}

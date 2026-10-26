@@ -10,12 +10,12 @@ LLM 驱动的规划器，负责将研究问题分解为结构化的子任务 DAG
 from __future__ import annotations
 
 import json
-import re
 from typing import Any
 
 from .dag import DAG, DAGCycleError
 from .budget_tracker import BudgetTracker
 from ..orchestrator.schemas import SubTask, TaskType, AgentResult
+from ..utils.json_utils import JsonExtractionError, extract_json, extract_json_dict
 from ..utils.tracing import trace_chain
 
 
@@ -242,55 +242,15 @@ class Planner:
     def _parse_plan(self, json_str: str) -> DAG:
         """健壮性 JSON 解析：处理 markdown 代码块、多余换行等噪声。
 
-        解析策略:
-          1. 先尝试直接 json.loads
-          2. 失败则提取 markdown 代码块内容
-          3. 清理常见噪声（尾部逗号、注释等）
-          4. 验证 DAG 无环
+        解析逻辑统一由 src/utils/json_utils.py 提供，
+        此处仅做 sub_tasks 结构校验与 DAG 无环校验。
         """
-        raw = json_str.strip()
-
-        # 尝试提取 markdown 代码块
-        if raw.startswith("```"):
-            # 去掉首行 ```json 或 ```
-            lines = raw.splitlines()
-            if lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].startswith("```"):
-                lines = lines[:-1]
-            raw = "\n".join(lines).strip()
-
-        # 尝试提取 ```json...``` 中间的内容（即使不在开头）
-        code_block_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
-        if code_block_match:
-            raw = code_block_match.group(1).strip()
-
-        # 尝试直接找最外层的 JSON 对象
-        if not raw.startswith("{"):
-            obj_match = re.search(r"(\{.*\})", raw, re.DOTALL)
-            if obj_match:
-                raw = obj_match.group(1).strip()
-
-        # 清理尾部逗号（JSON 不允许 trailing comma）
-        raw = re.sub(r",(\s*[}\]])", r"\1", raw)
-
-        # 解析 JSON
         try:
-            data = json.loads(raw)
-        except json.JSONDecodeError as e:
-            # 最后尝试：逐行修复（去掉注释）
-            cleaned_lines = []
-            for line in raw.splitlines():
-                # 去掉 // 注释
-                if "//" in line:
-                    line = line[: line.index("//")]
-                cleaned_lines.append(line)
-            try:
-                data = json.loads("\n".join(cleaned_lines))
-            except json.JSONDecodeError:
-                raise PlanParseError(
-                    f"Failed to parse planner output as JSON. Raw snippet: {json_str[:500]}"
-                ) from e
+            data = extract_json(json_str)
+        except JsonExtractionError as e:
+            raise PlanParseError(
+                f"Failed to parse planner output as JSON. Raw snippet: {json_str[:500]}"
+            ) from e
 
         if not isinstance(data, dict) or "sub_tasks" not in data:
             raise PlanParseError(f"Planner output missing 'sub_tasks' key. Keys: {list(data.keys()) if isinstance(data, dict) else type(data)}")
@@ -346,30 +306,9 @@ class Planner:
 
         通常在 generate_plan 后由编排器调用。
         """
-        # 复用 _parse_plan 中的解析逻辑，但返回映射
-        # 这里重新解析 raw_json 以获取完整 SubTask 信息
-        raw = raw_json.strip()
-        if raw.startswith("```"):
-            lines = raw.splitlines()
-            if lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].startswith("```"):
-                lines = lines[:-1]
-            raw = "\n".join(lines).strip()
-        code_block_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
-        if code_block_match:
-            raw = code_block_match.group(1).strip()
-        if not raw.startswith("{"):
-            obj_match = re.search(r"(\{.*\})", raw, re.DOTALL)
-            if obj_match:
-                raw = obj_match.group(1).strip()
-        raw = re.sub(r",(\s*[}\]])", r"\1", raw)
-
-        try:
-            data = json.loads(raw)
-        except json.JSONDecodeError:
-            return {}
-
+        data = extract_json_dict(raw_json, default={})
         sub_tasks_raw = data.get("sub_tasks", [])
+        if not isinstance(sub_tasks_raw, list):
+            return {}
         return {item.get("task_id", f"task_{i}"): self._deserialize_subtask(item)
                 for i, item in enumerate(sub_tasks_raw)}

@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deep-research-agent"
-version = "0.1.0"
+version = "0.2.0"
 description = "基于自进化+对抗降噪的DeepResearch Agent"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 authors = [
     {name = "DeepResearch Team"},
 ]
@@ -18,37 +18,45 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
+# 核心依赖：跑通主链路（规划/编排/记忆/对抗/工具）所需，刻意保持轻量。
+# torch / transformers / sentence-transformers 等重依赖全部移入 extras——
+# 未安装时 Embedder 自动降级为确定性哈希向量（见 src/memory/embedder.py）。
 dependencies = [
-    # 核心依赖
-    "openai>=1.0",
-    "transformers>=4.40",
-    "torch>=2.0",
-    "numpy",
-    "aiohttp",
-    "pyyaml",
-    "python-dotenv>=1.0",  # 多后端 .env 配置支持
-    "sentence-transformers",
-    "networkx",           # 用于 TextRank 等图算法
-    "scikit-learn",
-    "tqdm",
-    "datasets",
-    "pandas",
-    "matplotlib",
-    # vLLM 推理服务（可选，本地部署时安装）
-    # "vllm",
-    # PEFT / LoRA 微调（自进化模块需要）
-    # "peft",
-    # "accelerate",
-    # "deepspeed",
+    "openai>=1.0",        # LLM 客户端（DeepSeek / MiMo / vLLM 均 OpenAI 兼容）
+    "numpy>=1.24",
+    "aiohttp>=3.8",       # 工具层异步 HTTP
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0", # 多后端 .env 配置
+    "networkx>=3.0",      # M3 TextRank 图算法
+    "beautifulsoup4>=4.12", # BrowserTool HTML 解析
+    "tqdm>=4.65",
 ]
 
 [project.optional-dependencies]
+# 真实语义向量（M3/M4 效果更好；不装则用确定性 fallback，功能完整）
+embedding = [
+    "sentence-transformers>=2.5",
+    "torch>=2.0",
+    "transformers>=4.40",
+]
+# 评测与实验分析
+eval = [
+    "scikit-learn>=1.3",
+    "pandas>=2.0",
+    "matplotlib>=3.7",
+    "datasets>=2.14",
+]
+# 可观测性
+tracing = [
+    "langsmith>=0.1.0",
+]
 # vLLM 推理服务依赖
 serve = [
     "vllm>=0.4.0",
@@ -69,41 +77,42 @@ dev = [
     "mypy",
     "flake8",
 ]
-# 全部可选依赖
 all = [
-    "deep-research-agent[serve,train,dev]",
+    "deep-research-agent[embedding,eval,tracing,dev]",
 ]
 
 [project.scripts]
-# 命令行快捷入口
+# 命令行快捷入口（run_benchmark 为交互式脚本，请用 python scripts/run_benchmark.py 运行）
 run-research = "scripts.run_single:main"
 run-eval = "scripts.run_eval:main"
 run-ablation = "scripts.run_ablation:main"
-run-benchmark = "scripts.run_benchmark:main"
 run-judge = "scripts.run_judge:main"
 run-evolution = "scripts.run_evolution:main"
 
 [project.urls]
-Homepage = "https://github.com/your-org/deep-research-agent"
-Repository = "https://github.com/your-org/deep-research-agent"
-Issues = "https://github.com/your-org/deep-research-agent/issues"
+Homepage = "https://github.com/qiqihezh/deepresearch-agent"
+Repository = "https://github.com/qiqihezh/deepresearch-agent"
+Issues = "https://github.com/qiqihezh/deepresearch-agent/issues"
 
 [tool.setuptools]
-packages = ["src", "evaluation", "scripts", "configs"]
+packages = ["src", "src.adversarial", "src.agents", "src.compressor", "src.core", "src.evolution", "src.memory", "src.models", "src.orchestrator", "src.planner", "src.tools", "src.utils", "evaluation", "evaluation.benchmarks", "evaluation.metrics", "scripts"]
 
 [tool.setuptools.package-data]
 configs = ["*.yaml", "**/*.yaml"]
 
 [tool.black]
 line-length = 120
-target-version = ["py310", "py311", "py312"]
+target-version = ["py39", "py310", "py311", "py312"]
 
 [tool.isort]
 profile = "black"
 line_length = 120
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

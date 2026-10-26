@@ -4,7 +4,7 @@
 
 ### *从复杂 Query 到结构化深度研究报告，全链路自动化*
 
-[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Async](https://img.shields.io/badge/Async-asyncio-orange.svg)](https://docs.python.org/3/library/asyncio.html)
 
@@ -153,13 +153,24 @@ cd deep_research_agent
 uv venv .venv
 source .venv/bin/activate
 
-# 3. 安装核心依赖
+# 3. 安装依赖（核心依赖轻量，不含 torch；可选 extras 见下表）
 pip install -r requirements.txt
 
 # 4. 配置 API Key（复制模板后填入）
-cp .env.example .env
-# 编辑 .env：填入 DEEPSEEK_API_KEY、BOCHA_API_KEY 等
+cp .env.template .env
+# 编辑 .env：填入 DEEPSEEK_API_KEY、MIMO_API_KEY、BOCHA_API_KEY 等
 ```
+
+可选依赖（按需安装）：
+
+| Extras | 内容 | 何时需要 |
+|--------|------|---------|
+| `pip install -e ".[embedding]"` | sentence-transformers + torch | 想要真实语义向量（不装则用确定性 fallback，功能完整） |
+| `pip install -e ".[eval]"` | pandas / matplotlib / sklearn | 跑评测与实验分析 |
+| `pip install -e ".[tracing]"` | LangSmith | 开启调用链追踪 |
+| `pip install -e ".[serve]"` | vLLM | 本地部署模型（需 GPU） |
+| `pip install -e ".[train]"` | peft / deepspeed | 自进化训练 |
+| `pip install -e ".[dev]"` | pytest / black / mypy | 开发贡献 |
 
 ### 三种运行方式
 
@@ -185,6 +196,16 @@ python scripts/run_all_experiments.py \
 
 > 批量实验默认配置：模块消融 5×12 题 + 轮数消融 4×12 题 + 标准评测 35 题 + 领域对比 3×5 题 + Agent vs LLM 3 题 + Judge 1 次 = **165 次独立研究运行**
 
+**✅ 单元测试（无需任何 API Key，本地 1 分钟跑完）**
+```bash
+pip install pytest
+python -m pytest tests/ -v
+```
+
+> 覆盖 JSON 鲁棒解析、DAG 拓扑排序、规划器解析、预算追踪、记忆去重/会话隔离、
+> 对抗评分引擎、工具沙箱安全（含前缀绕过防护）、模型路由配置等纯逻辑模块。
+> CI 在 Python 3.9-3.11 矩阵上自动运行（`.github/workflows/ci.yml`）。
+
 ---
 
 ## 📁 仓库结构
@@ -192,12 +213,13 @@ python scripts/run_all_experiments.py \
 ```raw
 deep_research_agent/
 ├── 📁 configs/                    # YAML 配置中心
-│   ├── default.yaml               # 全局默认配置
+│   ├── default.yaml               # 全局默认配置（模型分工/采样参数/各模块开关）
 │   ├── agents/                    # Agent 行为配置
-│   ├── interaction_config/        # 交互层配置
-│   └── tool_config/               # 工具层配置
+│   ├── evolution/                 # 自进化配置
+│   ├── planner/                   # 规划器配置
+│   └── tools/                     # 工具配置
 │
-├── 📁 src/                        # 核心源码（~5000 行）
+├── 📁 src/                        # 核心源码（~11000 行）
 │   ├── 📁 core/                   # 核心运行层
 │   │   ├── runner.py              # 初始化模块 + 执行完整研究流程
 │   │   ├── judge.py               # MiMo Judge 统一接口
@@ -210,11 +232,11 @@ deep_research_agent/
 │   ├── 📁 adversarial/            # ⚔️ M5: 对抗降噪循环
 │   ├── 📁 evolution/              # 🧬 M6: 自进化引擎
 │   ├── 📁 agents/                 # 🤖 Agent 实现
-│   ├── 📁 models/                 # 🔌 模型路由层
-│   ├── 📁 tools/                  # 🛠️ 工具层
-│   └── 📁 utils/                  # 🧰 工具函数
+│   ├── 📁 models/                 # 🔌 模型路由层（多后端热切换）
+│   ├── 📁 tools/                  # 🛠️ 工具层（搜索/论文/浏览器/沙箱）
+│   └── 📁 utils/                  # 🧰 工具函数（JSON解析/env/追踪）
 │
-├── 📁 evaluation/                 # 评测体系（~2000 行）
+├── 📁 evaluation/                 # 评测体系
 │   ├── benchmarks/                # 评测集（ResearchBench / HotpotQA）
 │   ├── metrics/                   # 指标（规则 / Judge / 统计 / 综合）
 │   └── analyze_ablation.py        # 消融实验结果分析
@@ -226,11 +248,12 @@ deep_research_agent/
 │   ├── run_ablation.py            # 消融实验独立入口
 │   ├── run_benchmark.py           # 🥊 Agent vs LLM
 │   ├── run_eval.py                # 标准评测入口
-│   ├── run_judge.py               # 👨‍⚖️ Judge 深度评分
-│   └── validate_env.py            # 环境配置检查
+│   └── run_judge.py               # 👨‍⚖️ Judge 深度评分
 │
-├── 📁 verl/                       # veRL 训练框架（GRPO）
-├── requirements.txt               # 依赖清单（分级安装）
+├── 📁 tests/                      # ✅ pytest 单元测试（无需 API Key）
+├── 📁 .github/workflows/          # CI（3.9-3.11 矩阵跑测试）
+├── requirements.txt               # 核心依赖（轻量，无 torch）
+├── pyproject.toml                 # 打包 + 可选 extras（embedding/eval/serve/train/dev）
 └── README.md                      # 📖 本文件
 ```
 
@@ -240,13 +263,12 @@ deep_research_agent/
 
 | 层级 | 技术 |
 |------|------|
-| 🐍 语言 | Python 3.11 |
+| 🐍 语言 | Python 3.9+ |
 | ⚡ 异步框架 | asyncio |
-| 🧠 LLM 后端 | DeepSeek API / MiMo 2.5 Pro / vLLM / OpenAI |
-| 🔢 嵌入模型 | sentence-transformers (`all-MiniLM-L6-v2`) |
+| 🧠 LLM 后端 | DeepSeek API / MiMo 2.5 Pro / vLLM / OpenAI（OpenAI 兼容协议统一接入） |
+| 🔢 嵌入模型 | sentence-transformers (`all-MiniLM-L6-v2`，可选；未安装自动降级为确定性向量) |
 | 💾 持久化 | SQLite + numpy 向量索引 |
-| 🎓 训练框架 | veRL (GRPO) |
-| 🔭 可观测性 | LangSmith |
+| 🔭 可观测性 | LangSmith（可选） |
 | 📦 虚拟环境 | uv |
 
 ---
@@ -260,6 +282,7 @@ deep_research_agent/
 - [x] 多后端 LLM 路由
 - [x] 完整评测体系（规则 + Judge + 统计显著性）
 - [x] REPL 交互式会话
+- [x] 单元测试 + CI（120 用例，Python 3.9-3.11 矩阵）
 - [ ] 实验结果填充（进行中 🔥）
 - [ ] Web UI（Gradio/Streamlit）
 - [ ] 用户反馈闭环

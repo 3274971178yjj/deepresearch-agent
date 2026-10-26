@@ -1,0 +1,323 @@
+{
+  "1_Issue相等性机制": {
+    "dataclass_无hash时__hash__": "None",
+    "dataclass_无hash时可入set": false,
+    "Issue可入set": true,
+    "evidence不同是否判等": true,
+    "evidence不同的两条去重后剩": 1,
+    "措辞不同是否判等": false,
+    "相等性涉及的字段": [
+      "severity",
+      "dimension",
+      "description",
+      "location",
+      "fix_type"
+    ]
+  },
+  "2_枚举名与值": {
+    "Severity": [
+      {
+        "名": "CRITICAL",
+        "值": "critical",
+        "语义错位": false
+      },
+      {
+        "名": "MAJOR",
+        "值": "major",
+        "语义错位": false
+      },
+      {
+        "名": "MINOR",
+        "值": "minor",
+        "语义错位": false
+      }
+    ],
+    "FixType": [
+      {
+        "名": "IN_PLACE",
+        "值": "in_place",
+        "语义错位": false
+      },
+      {
+        "名": "SUPPLEMENTARY",
+        "值": "search",
+        "语义错位": true
+      },
+      {
+        "名": "REMOVAL",
+        "值": "removal",
+        "语义错位": false
+      }
+    ],
+    "Dimension": [
+      {
+        "名": "FACTUAL",
+        "值": "fact_check",
+        "语义错位": true
+      },
+      {
+        "名": "HALLUCINATION",
+        "值": "hallucination",
+        "语义错位": false
+      },
+      {
+        "名": "LOGICAL",
+        "值": "logical",
+        "语义错位": false
+      },
+      {
+        "名": "SOURCE_CREDIBILITY",
+        "值": "source_credibility",
+        "语义错位": false
+      },
+      {
+        "名": "COVERAGE",
+        "值": "coverage",
+        "语义错位": false
+      }
+    ],
+    "_用枚举名当值的后果": "ValueError: 'supplementary' is not a valid FixType",
+    "_未知枚举值反序列化": {
+      "severity=blocker": "ValueError: 'blocker' is not a valid Severity",
+      "dimension=mind_reading": "ValueError: 'mind_reading' is not a valid Dimension"
+    }
+  },
+  "3_compute_overall": {
+    "五维全8.0": 8.0,
+    "只给三维都8.0": 8.0,
+    "缺失维度时_重新归一化": true,
+    "只给FACTUAL10_COVERAGE0": 7.5,
+    "空字典": 0.0,
+    "越界输入99_被clamp": 10.0,
+    "权重表": {
+      "fact_check": 0.3,
+      "hallucination": 0.25,
+      "logical": 0.2,
+      "source_credibility": 0.15,
+      "coverage": 0.1
+    },
+    "权重和": 1.0
+  },
+  "4_compute_delta量纲": {
+    "全等": 0.0,
+    "每维+0.1_共5维": 0.2236,
+    "每维+0.2_共5维": 0.4472,
+    "每维+1.0_共5维": 2.2361,
+    "理论最大_全0到全10": 22.3607,
+    "实际配置阈值0.2": 0.2,
+    "函数默认阈值0.3": 0.3,
+    "阈值0.2占理论最大百分比": 0.89,
+    "阈值0.2等价于每维变化": 0.0894,
+    "阈值0.3等价于每维变化": 0.1342,
+    "每维+0.1是否触发0.2阈值": false,
+    "每维+0.2是否触发0.2阈值": false
+  },
+  "5_compute_priority": {
+    "最低": {
+      "分": 0.06,
+      "组合": "MINOR/COVERAGE/SUPPLEMENTARY"
+    },
+    "最高": {
+      "分": 3.0,
+      "组合": "CRITICAL/FACTUAL/IN_PLACE"
+    },
+    "跨度倍数": 50.0,
+    "SEVERITY_WEIGHTS": {
+      "CRITICAL": 10.0,
+      "MAJOR": 5.0,
+      "MINOR": 1.0
+    },
+    "FIX_DIFFICULTY": {
+      "IN_PLACE": 1.0,
+      "REMOVAL": 0.8,
+      "SUPPLEMENTARY": 0.6
+    },
+    "难度名与乘数方向相反": true,
+    "公式": "severity_weight × dimension_weight × fix_difficulty（连乘，非相加）"
+  },
+  "6_序列化与调用点": {
+    "序列化对称性": {
+      "Issue": {
+        "to_dict": true,
+        "from_dict": true
+      },
+      "RedVerdict": {
+        "to_dict": true,
+        "from_dict": true
+      },
+      "FixOperation": {
+        "to_dict": true,
+        "from_dict": false
+      }
+    },
+    "API调用点数": {
+      "VerdictEngine.to_json": 0,
+      "VerdictEngine.from_json": 0,
+      "VerdictEngine.compute_overall": 1,
+      "VerdictEngine.compute_delta": 1,
+      "VerdictEngine.compute_priority": 1
+    },
+    "零调用的API": [
+      "VerdictEngine.to_json",
+      "VerdictEngine.from_json"
+    ],
+    "各API出现位置": {
+      "VerdictEngine.to_json": [],
+      "VerdictEngine.from_json": [],
+      "VerdictEngine.compute_overall": [
+        "src/adversarial/red_agent.py:334"
+      ],
+      "VerdictEngine.compute_delta": [
+        "src/adversarial/loop.py:131"
+      ],
+      "VerdictEngine.compute_priority": [
+        "src/adversarial/blue_agent.py:206"
+      ]
+    }
+  },
+  "7_死配置与审计链": {
+    "adversarial段配置键": [
+      "enabled",
+      "max_rounds",
+      "score_threshold",
+      "delta_threshold",
+      "save_logs"
+    ],
+    "各键在runner.py的读点": {
+      "enabled": [
+        "src/core/runner.py:264",
+        "src/core/runner.py:312",
+        "src/core/runner.py:313"
+      ],
+      "max_rounds": [
+        "src/core/runner.py:233"
+      ],
+      "score_threshold": [
+        "src/core/runner.py:234"
+      ],
+      "delta_threshold": [
+        "src/core/runner.py:235"
+      ],
+      "save_logs": []
+    },
+    "死配置_无读点": [
+      "save_logs"
+    ],
+    "orchestrator里history的用法": [
+      "orchestrator.py:456: optimized_report, history = await self.adversarial_loop.run(report)",
+      "orchestrator.py:458: self._adversarial_count += len(history)",
+      "orchestrator.py:459: print(f\"[Adversarial] ✓ 对抗优化完成: {len(history)} 轮, 最终置信度={optimized_report.confidence:.2f}\")"
+    ],
+    "history被落盘": false,
+    "outputs里的对抗日志": [
+      "outputs/m5_verdict_metrics.json"
+    ],
+    "对抗轮数是否会落盘说明": "loop.py 构造了含 dimension_scores/delta/fix_operations/stop_reason 的每轮记录，但 orchestrator 只取 len(history)，记录本身不落盘"
+  },
+  "8_真实报告实测": {
+    "每份报告": [
+      {
+        "文件": "outputs/reports1/report_20260509_130149_2024年至2025年大模型Agent技.md",
+        "对抗轮数": "2",
+        "置信度": "0.46",
+        "final_score_是否出现在报告里": false
+      },
+      {
+        "文件": "outputs/reports2/report_20260509_140616_计算Transformer模型在7B_1.md",
+        "对抗轮数": "2",
+        "置信度": "0.47",
+        "final_score_是否出现在报告里": false
+      },
+      {
+        "文件": "outputs/reports3/report_20260509_150749_中国新能源汽车行业2024年至2025年.md",
+        "对抗轮数": "10",
+        "置信度": "0.47",
+        "final_score_是否出现在报告里": false
+      },
+      {
+        "文件": "outputs/reports4/report_20260509_163841_检索近一年_2024年至2025年_关于.md",
+        "对抗轮数": "10",
+        "置信度": "0.46",
+        "final_score_是否出现在报告里": false
+      },
+      {
+        "文件": "outputs/reports5/report_20260509_171856_对比分析2024年至2025年生成式AI.md",
+        "对抗轮数": "5",
+        "置信度": "0.47",
+        "final_score_是否出现在报告里": false
+      }
+    ],
+    "轮数汇总": {
+      "样本数": 5,
+      "各次轮数": [
+        2,
+        2,
+        10,
+        10,
+        5
+      ],
+      "命中上限10的次数": 2,
+      "命中上限比例": "2/5",
+      "最小值": 2,
+      "最大值": 10
+    },
+    "final_score在报告中出现": false
+  },
+  "9_收敛判据顺序": {
+    "实际配置": {
+      "max_rounds": 10,
+      "score_threshold": 9.5,
+      "delta_threshold": 0.2
+    },
+    "探针": [
+      {
+        "round": 1,
+        "score": 9.6,
+        "delta": 0.0,
+        "stop_reason": "score_threshold_met(9.60>=9.5)"
+      },
+      {
+        "round": 2,
+        "score": 9.6,
+        "delta": 0.05,
+        "stop_reason": "score_threshold_met(9.60>=9.5)"
+      },
+      {
+        "round": 2,
+        "score": 5.0,
+        "delta": 0.05,
+        "stop_reason": "delta_converged(0.050<0.2)"
+      },
+      {
+        "round": 2,
+        "score": 5.0,
+        "delta": 1.2,
+        "stop_reason": ""
+      },
+      {
+        "round": 9,
+        "score": 9.9,
+        "delta": 0.0,
+        "stop_reason": "score_threshold_met(9.90>=9.5)"
+      },
+      {
+        "round": 10,
+        "score": 9.9,
+        "delta": 0.0,
+        "stop_reason": "max_rounds_reached(10)"
+      }
+    ],
+    "round10必报max_rounds": true,
+    "score与delta在早停时不可区分": "早停时 stop_reason 会写明是哪一个；但轮数记录不落盘，所以从 outputs/ 只能看到轮数，无法反推早停原因"
+  },
+  "10_分数语义": {
+    "loop_attack": "loop.py:96   verdict = await red_agent.attack(current)",
+    "loop_defend": "loop.py:118  fixed_report, operations = await blue_agent.defend(current, verdict)",
+    "loop_convergence_input": "loop.py:135  _check_convergence(round_idx, verdict.overall_score, delta)",
+    "结论": "verdict 在 defend 之前产生，所以收敛判据用的是【本轮修复前】的分数；final_score = history[-1]['overall_score'] 同样是修复前分数，是保守下界",
+    "delta比的是哪两轮": "compute_delta(prev_scores, verdict.dimension_scores) —— 两个输入都是'攻击时'的分数，中间隔着的是上一轮的修复动作，所以 delta 衡量的是上一轮修复的边际收益",
+    "schemas_docstring说": "schemas.py:124  final_score: 最终综合评分（由外部评测模块写入）",
+    "实际写入点": "loop.py:157  current.final_score = history[-1]['overall_score']",
+    "docstring与实现是否一致": false
+  }
+}

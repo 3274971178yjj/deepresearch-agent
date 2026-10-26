@@ -1,0 +1,239 @@
+{
+  "threshold_semantics": {
+    "budget": 16000,
+    "output_reserve": 2048,
+    "available_budget": 13952,
+    "chars_per_token": 3.5,
+    "levels": [
+      {
+        "level": 1,
+        "const": "_L1_THRESHOLD",
+        "occupancy": 0.6,
+        "need_tokens": 8371,
+        "need_chars": 29299
+      },
+      {
+        "level": 2,
+        "const": "_L2_THRESHOLD",
+        "occupancy": 0.8,
+        "need_tokens": 11162,
+        "need_chars": 39066
+      },
+      {
+        "level": 3,
+        "const": "_L3_THRESHOLD",
+        "occupancy": 0.95,
+        "need_tokens": 13254,
+        "need_chars": 46390
+      }
+    ],
+    "yaml_comment_claims_similarity": true
+  },
+  "gate_incompatibility": {
+    "orchestrator_gate_chars": 6000,
+    "gate_tokens_inferred": 1714,
+    "gate_occupancy": 0.1229,
+    "l1_occupancy": 0.6,
+    "gap_factor": 4.9,
+    "per_entry_chars": 210,
+    "min_entries_needed": {
+      "L1": 140,
+      "L2": 187,
+      "L3": 221
+    }
+  },
+  "level0_noop": {
+    "entries": 30,
+    "input_chars": 6000,
+    "output_chars": 6000,
+    "returned_unchanged": true,
+    "logged_line_misleading": true,
+    "level_distribution_budget16000": {
+      "0": 1,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "control_budget3000_output_chars": 54,
+    "control_budget3000_levels": {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 1
+    }
+  },
+  "l2_comment_math": {
+    "formula": "max(0.15, min(0.40, 0.50 - occupancy * 0.35))",
+    "table": [
+      {
+        "occupancy": 0.6,
+        "formula": 0.29,
+        "comment_claim": "-"
+      },
+      {
+        "occupancy": 0.7,
+        "formula": 0.255,
+        "comment_claim": "-"
+      },
+      {
+        "occupancy": 0.8,
+        "formula": 0.22,
+        "comment_claim": "30%"
+      },
+      {
+        "occupancy": 0.9,
+        "formula": 0.185,
+        "comment_claim": "-"
+      },
+      {
+        "occupancy": 1.0,
+        "formula": 0.15,
+        "comment_claim": "15%"
+      }
+    ],
+    "occupancy_at_0_30": 0.5714,
+    "occupancy_at_0_15": 1.0,
+    "comment_claims": {
+      "0.80": 0.3,
+      "1.00": 0.15
+    },
+    "comment_correct": false
+  },
+  "l2_short_doc_noop": {
+    "real_report_chars": 25185,
+    "sentences_in_200char_fragment": 4,
+    "sentences_in_full_report": 570,
+    "fragment_hits_early_return": false,
+    "early_return_threshold": 3,
+    "kept_sentences_at_ratio": {
+      "0.40": 228,
+      "0.22": 125,
+      "0.15": 85,
+      "fragment_0.22": 1
+    }
+  },
+  "l1_adaptive_loop": {
+    "case_all_below_0_25": {
+      "kept_docs": 1,
+      "input_docs": 30,
+      "lower_thresholds_tried": false,
+      "fallback_top1_used": true
+    },
+    "case_all_above_0_25": {
+      "kept_docs": 30,
+      "input_docs": 30
+    },
+    "docstring_claim": "若过滤后仍然超 budget，逐步降低到 0.15",
+    "claim_holds_on_empty_result_path": false
+  },
+  "end_to_end_real_report": {
+    "input_fragments": 30,
+    "input_chars": 6000,
+    "rows": [
+      {
+        "level": 1,
+        "out_docs": 1,
+        "out_chars": 200,
+        "compression_ratio": 0.0333,
+        "information_retention": 0.097
+      },
+      {
+        "level": 2,
+        "out_docs": 1,
+        "out_chars": 68,
+        "compression_ratio": 0.0113,
+        "information_retention": 0.0
+      },
+      {
+        "level": 3,
+        "out_docs": 1,
+        "out_chars": 68,
+        "compression_ratio": 0.0113,
+        "information_retention": 0.0
+      }
+    ],
+    "caveat": "本机无 sentence-transformers，向量为确定性随机回退"
+  },
+  "dead_config": {
+    "declared": [
+      "max_context_length",
+      "output_reserve_tokens",
+      "l1_threshold",
+      "l2_threshold",
+      "l3_threshold",
+      "embedding_model",
+      "enable_multilevel"
+    ],
+    "live": [
+      "max_context_length",
+      "output_reserve_tokens",
+      "enable_multilevel"
+    ],
+    "dead": [
+      "l1_threshold",
+      "l2_threshold",
+      "l3_threshold",
+      "embedding_model"
+    ]
+  },
+  "get_stats_callers": {
+    "count": 0,
+    "hits": []
+  },
+  "embedder_fallback": {
+    "sentence_transformers_available": false,
+    "cos_related": 0.0779,
+    "cos_unrelated": 0.0203,
+    "gap": 0.0577,
+    "semantic_signal_present": false
+  },
+  "sliding_window_orphan": {
+    "input_roles": [
+      "system",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "user"
+    ],
+    "output_roles": [
+      "system",
+      "assistant",
+      "tool",
+      "user"
+    ],
+    "truncated": true,
+    "orphan_tool_message": true,
+    "stats": {
+      "before_chars": 1852,
+      "after_chars": 1224,
+      "removed_turns": 2,
+      "truncated": true
+    }
+  },
+  "real_reports": {
+    "files": [
+      {
+        "file": "outputs/reports1/report_20260509_130149_2024年至2025年大模型Agent技.md",
+        "chars": 25185
+      },
+      {
+        "file": "outputs/reports2/report_20260509_140616_计算Transformer模型在7B_1.md",
+        "chars": 23005
+      },
+      {
+        "file": "outputs/reports3/report_20260509_150749_中国新能源汽车行业2024年至2025年.md",
+        "chars": 24092
+      },
+      {
+        "file": "outputs/reports4/report_20260509_163841_检索近一年_2024年至2025年_关于.md",
+        "chars": 13509
+      },
+      {
+        "file": "outputs/reports5/report_20260509_171856_对比分析2024年至2025年生成式AI.md",
+        "chars": 19180
+      }
+    ],
+    "avg_chars": 20994
+  }
+}

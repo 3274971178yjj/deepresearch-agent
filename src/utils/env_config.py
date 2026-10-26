@@ -47,11 +47,16 @@ def ensure_env_loaded() -> None:
 def get_env(key: str, default: str | None = None) -> str | None:
     """读取环境变量，支持空字符串转 None。
 
+    - 变量未设置：返回 default 原值（不再把默认值 "" 强转 None）
+    - 变量存在但为空串：视为未配置，返回 None
+
     首次调用会自动触发 ensure_env_loaded()。
     """
     ensure_env_loaded()
-    val = os.getenv(key, default)
-    if val == "" or val is None:
+    if key not in os.environ:
+        return default
+    val = os.environ[key]
+    if val == "":
         return None
     return val
 

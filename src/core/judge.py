@@ -13,10 +13,10 @@ MiMo 2.5 Pro LLM-as-Judge 统一接口。
 
 from __future__ import annotations
 
-import json
 import logging
-import re
 from typing import Any
+
+from src.utils.json_utils import JsonExtractionError, extract_json_dict
 
 logger = logging.getLogger("judge")
 
@@ -193,35 +193,8 @@ class LLMJudge:
     # -----------------------------------------------------------------------
     @staticmethod
     def _extract_json(text: str) -> dict[str, Any] | None:
-        """从文本中提取 JSON 对象，支持多种 fallback 策略。"""
-        # 策略 1: 直接找最外层 {}
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            try:
-                return json.loads(m.group())
-            except json.JSONDecodeError:
-                pass
-
-        # 策略 2: 找 ```json ... ``` 代码块
-        m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
-        if m:
-            try:
-                return json.loads(m.group(1))
-            except json.JSONDecodeError:
-                pass
-
-        # 策略 3: 修复常见 JSON 错误后再解析
-        cleaned = text.strip()
-        # 去除可能的 Markdown 标记
-        cleaned = re.sub(r"^```.*\n?", "", cleaned)
-        cleaned = re.sub(r"\n?```$", "", cleaned)
-        # 修复单引号
-        cleaned = cleaned.replace("'", '"')
-        # 修复 trailing comma
-        cleaned = re.sub(r",(\s*[}\]])", r"\1", cleaned)
+        """从文本中提取 JSON 对象（解析逻辑由 json_utils 统一提供）。"""
         try:
-            return json.loads(cleaned)
-        except json.JSONDecodeError:
-            pass
-
-        return None
+            return extract_json_dict(text)
+        except JsonExtractionError:
+            return None
